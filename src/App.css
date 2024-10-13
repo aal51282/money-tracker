@@ -1,106 +1,141 @@
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: #17181F;
-  color: #ddd;
+  background: #f0f2f5;
+  color: #333;
+  font-family: 'Roboto', sans-serif;
 }
 
-main {
-  max-width: 360px;
-  margin: 30px auto;
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  text-align: center;
 }
 
 h1 {
-  text-align: center;
-  color: #fff;
-  margin: 0;
   font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 800;
 }
 
-h1 span {
-  font-size: 1rem;
-  vertical-align: top;
-  display: inline-block;
-  margin-top: 6px;
+.balance {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2ecc71;
+}
+
+.balance.negative {
+  color: #e74c3c;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 30px;
+}
+
+.form-container, .transactions-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 form {
-  margin-top: 20px;
-}
-
-form input {
-  width: 100%;
-  background: transparent;
-  color: #ddd;
-  border: 2px solid #30313d;
-  padding: 2px 5px;
-  border-radius: 5px;
-}
-
-form input[type="datetime-local"] {
-  color: #777;
-}
-
-form input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  filter: invert(40%);
-}
-
-form div.basic {
   display: flex;
-  gap: 5px;
-  margin-bottom: 5px;
+  flex-direction: column;
+  gap: 15px;
 }
 
-form button {
+form input, form button {
   width: 100%;
-  margin-top: 5px;
-  border: 0;
-  border-radius: 5px;
-  padding: 5px;
-  background-color: #ddd;
-  cursor: pointer;
-}
-
-div.transaction {
-  margin-top: 10px;
-}
-
-div.transaction {
-  display: flex;
-  padding: 5px 0;
-  justify-content: space-between;
-  border-top: 1px solid #444;
-}
-
-div.transaction:first-child {
-  border-top: 0;
-}
-
-div.transaction div.name {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-size: 1rem;
 }
 
-div.transaction div.description {
-  font-size: 0.7rem;
-  color: #888;
+form input:focus {
+  outline: none;
+  border-color: #3498db;
 }
 
-div.right {
-  text-align: right;
+form button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-div.price.green {
-  color: #1c1;
+form button:hover {
+  background-color: #2980b9;
 }
 
-div.price.red {
-  color: #c11;
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-div.transaction div.datetime {
-  font-size: 0.7rem;
-  color: #888;
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.transaction:hover {
+  transform: translateY(-2px);
+}
+
+.transaction-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.transaction-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.transaction-description, .transaction-date {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.transaction-amount {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.transaction-amount.positive {
+  color: #2ecc71;
+}
+
+.transaction-amount.negative {
+  color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;
+  }
 }
