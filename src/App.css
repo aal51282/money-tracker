@@ -102,16 +102,22 @@ form button:hover {
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 8px;
-  transition: transform 0.2s ease;
+  margin-bottom: 10px;
 }
 
 .transaction:hover {
   transform: translateY(-2px);
 }
 
-.transaction-details {
+.transaction-info {
+  flex-grow: 1;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transaction-details {
+  flex-grow: 1;
 }
 
 .transaction-name {
@@ -119,7 +125,8 @@ form button:hover {
   font-size: 1.1rem;
 }
 
-.transaction-description, .transaction-date {
+.transaction-description,
+.transaction-date {
   font-size: 0.9rem;
   color: #777;
 }
@@ -127,6 +134,8 @@ form button:hover {
 .transaction-amount {
   font-weight: 600;
   font-size: 1.2rem;
+  margin-left: 20px;
+  margin-right: 30px;
 }
 
 .transaction-amount.positive {
@@ -137,42 +146,20 @@ form button:hover {
   color: #e74c3c;
 }
 
-@media (max-width: 768px) {
-  main {
-    grid-template-columns: 1fr;
-  }
-}
-
-.transaction-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.load-more-button,
-.show-less-button {
-  flex: 1;
-  padding: 10px;
-  background-color: #f0f2f5;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  color: #333;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.load-more-button:hover,
-.show-less-button:hover {
-  background-color: #e4e6e9;
-}
-
 .transaction-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-.edit-button, .delete-button {
+.transaction-number {
+  font-size: 0.9rem;
+  color: #888;
+  margin-right: 10px;
+}
+
+.edit-button,
+.delete-button {
   padding: 5px 10px;
   border: none;
   border-radius: 4px;
@@ -196,6 +183,30 @@ form button:hover {
 
 .delete-button:hover {
   background-color: #c0392b;
+}
+
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.load-more-button,
+.show-less-button {
+  flex: 1;
+  padding: 10px;
+  background-color: #f0f2f5;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.load-more-button:hover,
+.show-less-button:hover {
+  background-color: #e4e6e9;
 }
 
 .modal-overlay {

@@ -8,9 +8,13 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [visibleTransactions, setVisibleTransactions] = useState(5);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [totalTransactions, setTotalTransactions] = useState(0);
 
   useEffect(() => {
-    getTransactions().then(setTransactions);
+    getTransactions().then(transactions => {
+      setTransactions(transactions);
+      setTotalTransactions(transactions.length);
+    });
   }, []);
 
   async function getTransactions() {
@@ -33,17 +37,37 @@ function App() {
         datetime,
       })
     }).then(response => {
-      response.json().then(json => {
+      response.json().then(newTransaction => {
         setName('');
         setDatetime('');
         setDescription('');
-        setTransactions(prevTransactions => [json, ...prevTransactions]);
+        setTransactions(prevTransactions => {
+          // Convert datetime strings to Date objects for comparison
+          const newDate = new Date(newTransaction.datetime);
+          const updatedTransactions = [...prevTransactions];
+          
+          // Find the correct position for the new transaction
+          const insertIndex = updatedTransactions.findIndex(t => new Date(t.datetime) <= newDate);
+          
+          if (insertIndex === -1) {
+            // If no earlier transaction found, add to the end
+            updatedTransactions.push(newTransaction);
+          } else {
+            // Insert the new transaction at the correct position
+            updatedTransactions.splice(insertIndex, 0, newTransaction);
+          }
+          
+          return updatedTransactions;
+        });
+        setTotalTransactions(prevTotal => prevTotal + 1);
       });
     });
   }
 
   function editTransaction(transaction) {
-    setEditingTransaction(transaction);
+    // Convert the datetime string to a format that works with datetime-local input
+    const datetimeForInput = new Date(transaction.datetime).toISOString().slice(0, 16);
+    setEditingTransaction({...transaction, datetime: datetimeForInput});
   }
 
   async function updateTransaction(e) {
@@ -53,7 +77,10 @@ function App() {
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingTransaction)
+        body: JSON.stringify({
+          ...editingTransaction,
+          datetime: new Date(editingTransaction.datetime).toISOString()
+        })
       });
       if (!response.ok) {
         throw new Error('Failed to update transaction');
@@ -76,7 +103,10 @@ function App() {
       if (!response.ok) {
         throw new Error('Failed to delete transaction');
       }
-      getTransactions().then(setTransactions);
+      getTransactions().then(transactions => {
+        setTransactions(transactions);
+        setTotalTransactions(transactions.length);
+      });
     } catch (error) {
       console.error('Error deleting transaction:', error);
       alert('Failed to delete transaction. Please try again.');
@@ -84,7 +114,7 @@ function App() {
   }
 
   function loadMoreTransactions() {
-    setVisibleTransactions(prevVisible => prevVisible + 5);
+    setVisibleTransactions(prevVisible => Math.min(prevVisible + 5, totalTransactions));
   }
 
   function showLessTransactions() {
@@ -127,6 +157,9 @@ function App() {
         </div>
         <div className="transactions-container">
           <h2>Transactions</h2>
+          <p className="transaction-count">
+            Showing {Math.min(visibleTransactions, transactions.length)} of {totalTransactions}
+          </p>
           <div className="transactions-list">
             {transactions.slice(0, visibleTransactions).map(transaction => (
               <div key={transaction._id} className="transaction">
@@ -146,7 +179,7 @@ function App() {
             ))}
           </div>
           <div className="transaction-buttons">
-            {visibleTransactions < transactions.length && (
+            {visibleTransactions < totalTransactions && (
               <button onClick={loadMoreTransactions} className="load-more-button">
                 Load More
               </button>
