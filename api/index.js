@@ -19,4 +19,11 @@ app.post('/api/transaction', async (req, res) => {
     res.json(transaction);
 });
 
+// Get all transactions from database
+app.get('/api/transactions', async (req, res) => {
+    await mongoose.connect(process.env.MONGO_URL);
+    const transactions = await Transaction.find();
+    res.json(transactions);
+});
+
 app.listen(4040);
