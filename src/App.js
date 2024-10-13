@@ -20,20 +20,12 @@ function App() {
         datetime,
       })
     }).then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
-      setName('');
-      setDatetime('');
-      setDescription('');
-    }).then(e => {
-      // Handle successful response
-      console.log('Success', e);
-    }).catch(error => {
-      // Handle errors here
-      console.error('Error:', error);
+      response.json().then(json => {
+        setName('');
+        setDatetime('');
+        setDescription('');
+        console.log('result', json);
+      });
     });
   }
 

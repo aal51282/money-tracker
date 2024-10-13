@@ -35,6 +35,11 @@ form input[type="datetime-local"] {
   color: #777;
 }
 
+form input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(40%);
+}
+
 form div.basic {
   display: flex;
   gap: 5px;
@@ -48,6 +53,7 @@ form button {
   border-radius: 5px;
   padding: 5px;
   background-color: #ddd;
+  cursor: pointer;
 }
 
 div.transaction {
