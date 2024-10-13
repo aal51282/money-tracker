@@ -37,7 +37,7 @@ function App() {
         setName('');
         setDatetime('');
         setDescription('');
-        getTransactions().then(setTransactions);
+        setTransactions(prevTransactions => [json, ...prevTransactions]);
       });
     });
   }
