@@ -97,12 +97,12 @@ form button:hover {
 
 .transaction {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 8px;
   margin-bottom: 10px;
+  transition: background-color 0.3s ease, border-left 0.3s ease;
 }
 
 .transaction:hover {
@@ -202,6 +202,7 @@ form button:hover {
   color: #333;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  width: 100%;
 }
 
 .load-more-button:hover,
@@ -243,4 +244,90 @@ form button:hover {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+@keyframes highlightFade {
+  0% { background-color: #fffacd; }
+  100% { background-color: #f9f9f9; }
+}
+
+.transaction.highlight {
+  background-color: #fffacd;
+  border-left: 4px solid #ffd700;
+}
+
+.delete-selected-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.delete-selected-button:hover {
+  background-color: #c0392b;
+}
+
+.transaction-checkbox {
+  margin-right: 10px;
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.select-multiple-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.select-multiple-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.select-multiple-checkbox {
+  margin-right: 5px;
+}
+
+.delete-selected-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+
+.delete-selected-button:hover {
+  background-color: #c0392b;
+}
+
+.transaction-checkbox {
+  margin-right: 10px;
+}
+
+.transaction {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: background-color 0.3s ease, border-left 0.3s ease;
+}
+
+.transaction:hover {
+  transform: translateY(-2px);
 }

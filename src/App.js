@@ -9,6 +9,9 @@ function App() {
   const [visibleTransactions, setVisibleTransactions] = useState(5);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [totalTransactions, setTotalTransactions] = useState(0);
+  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
+  const [selectedTransactions, setSelectedTransactions] = useState([]);
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   useEffect(() => {
     getTransactions().then(transactions => {
@@ -42,24 +45,20 @@ function App() {
         setDatetime('');
         setDescription('');
         setTransactions(prevTransactions => {
-          // Convert datetime strings to Date objects for comparison
           const newDate = new Date(newTransaction.datetime);
           const updatedTransactions = [...prevTransactions];
-          
-          // Find the correct position for the new transaction
           const insertIndex = updatedTransactions.findIndex(t => new Date(t.datetime) <= newDate);
           
           if (insertIndex === -1) {
-            // If no earlier transaction found, add to the end
             updatedTransactions.push(newTransaction);
           } else {
-            // Insert the new transaction at the correct position
             updatedTransactions.splice(insertIndex, 0, newTransaction);
           }
           
           return updatedTransactions;
         });
         setTotalTransactions(prevTotal => prevTotal + 1);
+        setRecentlyAddedId(newTransaction._id);
       });
     });
   }
@@ -121,6 +120,51 @@ function App() {
     setVisibleTransactions(5);
   }
 
+  function toggleSelectMode() {
+    setIsSelectMode(!isSelectMode);
+    if (isSelectMode) {
+      // Clear selections when exiting select mode
+      setSelectedTransactions([]);
+    }
+  }
+
+  function toggleTransactionSelection(id) {
+    setSelectedTransactions(prev => 
+      prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]
+    );
+  }
+
+  async function deleteSelectedTransactions() {
+    if (selectedTransactions.length === 0) return;
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedTransactions.length} transaction(s)?`)) {
+      return;
+    }
+
+    const url = process.env.REACT_APP_API_URL + '/transactions/delete';
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedTransactions })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete transactions');
+      }
+
+      getTransactions().then(transactions => {
+        setTransactions(transactions);
+        setTotalTransactions(transactions.length);
+      });
+      setSelectedTransactions([]);
+      setIsSelectMode(false);
+    } catch (error) {
+      console.error('Error deleting transactions:', error);
+      alert('Failed to delete transactions. Please try again.');
+    }
+  }
+
   const balance = transactions.reduce((acc, transaction) => acc + transaction.price, 0).toFixed(2);
   const isNegative = parseFloat(balance) < 0;
 
@@ -157,12 +201,41 @@ function App() {
         </div>
         <div className="transactions-container">
           <h2>Transactions</h2>
-          <p className="transaction-count">
-            Showing {Math.min(visibleTransactions, transactions.length)} of {totalTransactions}
-          </p>
+          <div className="transactions-header">
+            <p className="transaction-count">
+              Showing {Math.min(visibleTransactions, transactions.length)} of {totalTransactions}
+            </p>
+            <div className="select-multiple-container">
+              <label className="select-multiple-label">
+                <input
+                  type="checkbox"
+                  checked={isSelectMode}
+                  onChange={toggleSelectMode}
+                  className="select-multiple-checkbox"
+                />
+                Select Multiple
+              </label>
+              {isSelectMode && selectedTransactions.length > 0 && (
+                <button onClick={deleteSelectedTransactions} className="delete-selected-button">
+                  Delete Selected ({selectedTransactions.length})
+                </button>
+              )}
+            </div>
+          </div>
           <div className="transactions-list">
-            {transactions.slice(0, visibleTransactions).map(transaction => (
-              <div key={transaction._id} className="transaction">
+            {transactions.slice(0, visibleTransactions).map((transaction, index) => (
+              <div 
+                key={transaction._id} 
+                className={`transaction ${transaction._id === recentlyAddedId ? 'highlight' : ''}`}
+              >
+                {isSelectMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedTransactions.includes(transaction._id)}
+                    onChange={() => toggleTransactionSelection(transaction._id)}
+                    className="transaction-checkbox"
+                  />
+                )}
                 <div className="transaction-details">
                   <div className="transaction-name">{transaction.name}</div>
                   <div className="transaction-description">{transaction.description}</div>

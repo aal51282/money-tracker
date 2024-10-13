@@ -64,4 +64,19 @@ app.delete('/api/transaction/:id', async (req, res) => {
   }
 });
 
+// Delete multiple transactions
+app.post('/api/transactions/delete', async (req, res) => {
+  await mongoose.connect(process.env.MONGO_URL);
+  const { ids } = req.body;
+  try {
+    const result = await Transaction.deleteMany({ _id: { $in: ids } });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'No transactions found' });
+    }
+    res.json({ message: `${result.deletedCount} transaction(s) deleted successfully` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting transactions', error });
+  }
+});
+
 app.listen(4040);
