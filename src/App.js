@@ -3,6 +3,7 @@ import "./App.css";
 
 function App() {
   const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
   const [datetime, setDatetime] = useState("");
   const [description, setDescription] = useState("");
   const [transactions, setTransactions] = useState([]);
@@ -45,13 +46,15 @@ function App() {
 
   function validateTransaction() {
     const errors = [];
-    const parts = name.trim().split(' ');
-    const price = parseFloat(parts[0]);
     
-    if (parts.length < 2) {
-      errors.push("Please enter both a price and a name (e.g., '10.99 Groceries').");
-    } else if (isNaN(price)) {
-      errors.push("Price must be a number at the start of the name field.");
+    if (!name.trim()) {
+      errors.push("Transaction name is required.");
+    }
+    
+    if (!price.trim()) {
+      errors.push("Price is required.");
+    } else if (isNaN(parseFloat(price))) {
+      errors.push("Price must be a valid number.");
     }
     
     if (!datetime) {
@@ -70,17 +73,15 @@ function App() {
     }
 
     const url = process.env.REACT_APP_API_URL + '/transaction';
-    const parts = name.trim().split(' ');
-    const price = parseFloat(parts[0]);
-    const transactionName = parts.slice(1).join(' ');
+    const priceAsNumber = parseFloat(price);
 
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        price,
-        name: transactionName,
-        description: description || '', // Make description optional
+        price: priceAsNumber,
+        name,
+        description: description || '',
         datetime,
       })
     }).then(response => {
@@ -90,6 +91,7 @@ function App() {
       return response.json();
     }).then(json => {
       setName('');
+      setPrice('');
       setDatetime('');
       setDescription('');
       setTransactions(prevTransactions => [json, ...prevTransactions]);
@@ -259,7 +261,14 @@ function App() {
                 type="text" 
                 value={name}
                 onChange={ev => setName(ev.target.value)}
-                placeholder={'Transaction Name (+200 New TV)'}
+                placeholder={'Transaction Name'}
+              />
+              <input 
+                type="number" 
+                value={price}
+                onChange={ev => setPrice(ev.target.value)}
+                placeholder={'Price'}
+                step="0.01"
               />
               <input 
                 type="datetime-local" 
