@@ -16,6 +16,8 @@ function App() {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [filter, setFilter] = useState('all'); // 'all', 'positive', or 'negative'
+  const [filteredBalance, setFilteredBalance] = useState(0);
 
   useEffect(() => {
     getTransactions().catch(err => setError('Failed to fetch transactions'));
@@ -23,7 +25,7 @@ function App() {
 
   useEffect(() => {
     filterTransactions();
-  }, [transactions, searchQuery]);
+  }, [transactions, searchQuery, filter]);
 
   async function getTransactions() {
     try {
@@ -210,21 +212,35 @@ function App() {
   }
 
   function filterTransactions() {
-    if (!searchQuery.trim()) {
-      setFilteredTransactions(transactions);
-    } else {
+    let filtered = transactions;
+
+    // Apply transaction type filter
+    if (filter === 'positive') {
+      filtered = filtered.filter(t => t.price >= 0);
+    } else if (filter === 'negative') {
+      filtered = filtered.filter(t => t.price < 0);
+    }
+
+    // Apply search query filter
+    if (searchQuery.trim()) {
       const lowercaseQuery = searchQuery.toLowerCase();
-      const filtered = transactions.filter(transaction => 
+      filtered = filtered.filter(transaction => 
         transaction.name.toLowerCase().includes(lowercaseQuery) ||
         transaction.description.toLowerCase().includes(lowercaseQuery) ||
         transaction.price.toString().includes(lowercaseQuery) ||
         new Date(transaction.datetime).toLocaleString().toLowerCase().includes(lowercaseQuery)
       );
-      setFilteredTransactions(filtered);
     }
+
+    setFilteredTransactions(filtered);
+    
+    // Calculate and set the filtered balance
+    const newFilteredBalance = filtered.reduce((sum, transaction) => sum + transaction.price, 0);
+    setFilteredBalance(newFilteredBalance);
   }
 
-  const balance = transactions.reduce((acc, transaction) => acc + transaction.price, 0).toFixed(2);
+  // Update the balance variable to use filteredBalance
+  const balance = filteredBalance.toFixed(2);
   const isNegative = parseFloat(balance) < 0;
 
   return (
@@ -264,13 +280,35 @@ function App() {
         </div>
         <div className="transactions-container">
           <h2>Transactions</h2>
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search transactions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="filters">
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="filter-buttons">
+              <button 
+                className={filter === 'all' ? 'active' : ''} 
+                onClick={() => setFilter('all')}
+              >
+                All
+              </button>
+              <button 
+                className={filter === 'positive' ? 'active' : ''} 
+                onClick={() => setFilter('positive')}
+              >
+                Income
+              </button>
+              <button 
+                className={filter === 'negative' ? 'active' : ''} 
+                onClick={() => setFilter('negative')}
+              >
+                Expenses
+              </button>
+            </div>
           </div>
           <div className="transactions-header">
             <p className="transaction-count">

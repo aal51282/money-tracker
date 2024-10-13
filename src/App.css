@@ -403,3 +403,47 @@ form button:hover {
   border-color: #3498db;
   box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
 }
+
+.filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  flex-grow: 1;
+  margin-right: 20px;
+}
+
+.filter-buttons {
+  display: flex;
+}
+
+.filter-buttons button {
+  padding: 8px 12px;
+  margin-left: 10px;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.filter-buttons button.active {
+  background-color: #3498db;
+  color: white;
+}
+
+.filter-buttons button:hover {
+  background-color: #e0e0e0;
+}
+
+.filter-buttons button.active:hover {
+  background-color: #2980b9;
+}
+
+.transaction-total {
+  font-weight: bold;
+  font-size: 1.1em;
+}
