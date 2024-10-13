@@ -14,10 +14,16 @@ function App() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [error, setError] = useState(null);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
 
   useEffect(() => {
     getTransactions().catch(err => setError('Failed to fetch transactions'));
   }, []);
+
+  useEffect(() => {
+    filterTransactions();
+  }, [transactions, searchQuery]);
 
   async function getTransactions() {
     try {
@@ -203,6 +209,21 @@ function App() {
     }
   }
 
+  function filterTransactions() {
+    if (!searchQuery.trim()) {
+      setFilteredTransactions(transactions);
+    } else {
+      const lowercaseQuery = searchQuery.toLowerCase();
+      const filtered = transactions.filter(transaction => 
+        transaction.name.toLowerCase().includes(lowercaseQuery) ||
+        transaction.description.toLowerCase().includes(lowercaseQuery) ||
+        transaction.price.toString().includes(lowercaseQuery) ||
+        new Date(transaction.datetime).toLocaleString().toLowerCase().includes(lowercaseQuery)
+      );
+      setFilteredTransactions(filtered);
+    }
+  }
+
   const balance = transactions.reduce((acc, transaction) => acc + transaction.price, 0).toFixed(2);
   const isNegative = parseFloat(balance) < 0;
 
@@ -222,7 +243,7 @@ function App() {
                 type="text" 
                 value={name}
                 onChange={ev => setName(ev.target.value)}
-                placeholder={'+200 New TV'}
+                placeholder={'Transaction Name (+200 New TV)'}
               />
               <input 
                 type="datetime-local" 
@@ -243,9 +264,17 @@ function App() {
         </div>
         <div className="transactions-container">
           <h2>Transactions</h2>
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="Search transactions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <div className="transactions-header">
             <p className="transaction-count">
-              Showing {Math.min(visibleTransactions, transactions.length)} of {totalTransactions}
+              Showing {Math.min(visibleTransactions, filteredTransactions.length)} of {filteredTransactions.length}
             </p>
             <div className="select-multiple-container">
               <label className="select-multiple-label">
@@ -265,7 +294,7 @@ function App() {
             </div>
           </div>
           <div className="transactions-list">
-            {transactions.slice(0, visibleTransactions).map((transaction, index) => (
+            {filteredTransactions.slice(0, visibleTransactions).map((transaction, index) => (
               <div 
                 key={transaction._id} 
                 className={`transaction ${transaction._id === recentlyAddedId ? 'highlight' : ''}`}
@@ -294,13 +323,13 @@ function App() {
             ))}
           </div>
           <div className="transaction-buttons">
-            {visibleTransactions < totalTransactions && (
-              <button onClick={loadMoreTransactions} className="load-more-button">
+            {filteredTransactions.length > visibleTransactions && (
+              <button onClick={() => setVisibleTransactions(prev => prev + 5)} className="load-more-button">
                 Load More
               </button>
             )}
-            {visibleTransactions > 5 && (
-              <button onClick={showLessTransactions} className="show-less-button">
+            {visibleTransactions > 5 && filteredTransactions.length > 5 && (
+              <button onClick={() => setVisibleTransactions(5)} className="show-less-button">
                 Show Less
               </button>
             )}
