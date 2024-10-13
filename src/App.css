@@ -35,6 +35,9 @@ h1 {
 .balance {
   font-size: 3rem;
   font-weight: 700;
+}
+
+.balance.positive {
   color: #2ecc71;
 }
 

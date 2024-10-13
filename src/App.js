@@ -50,13 +50,14 @@ function App() {
   }
 
   const balance = transactions.reduce((acc, transaction) => acc + transaction.price, 0).toFixed(2);
+  const isNegative = parseFloat(balance) < 0;
 
   return (
     <div className="app-container">
       <header>
         <h1>Money Tracker</h1>
-        <div className={`balance ${parseFloat(balance) < 0 ? 'negative' : ''}`}>
-          ${Math.abs(balance)}
+        <div className={`balance ${isNegative ? 'negative' : 'positive'}`}>
+          {isNegative ? '-' : '+'}${Math.abs(balance)}
         </div>
       </header>
       <main>
@@ -92,8 +93,8 @@ function App() {
                   <div className="transaction-description">{transaction.description}</div>
                   <div className="transaction-date">{new Date(transaction.datetime).toLocaleString()}</div>
                 </div>
-                <div className={`transaction-amount ${transaction.price > 0 ? 'positive' : 'negative'}`}>
-                  ${Math.abs(transaction.price)}
+                <div className={`transaction-amount ${transaction.price >= 0 ? 'positive' : 'negative'}`}>
+                  {transaction.price >= 0 ? '+' : '-'}${Math.abs(transaction.price)}
                 </div>
               </div>
             ))}
