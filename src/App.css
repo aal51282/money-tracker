@@ -27,14 +27,15 @@ header {
 
 h1 {
   font-size: 2.5rem;
-  color: #333;
   margin-bottom: 10px;
   font-weight: 800;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .balance {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .balance.positive {
@@ -55,13 +56,12 @@ main {
   background: #ffffff;
   border-radius: 12px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
 }
 
 form input, form button {
@@ -70,11 +70,14 @@ form input, form button {
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 1rem;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
 }
 
 form input:focus {
   outline: none;
   border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
 }
 
 form button {
@@ -83,6 +86,7 @@ form button {
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-weight: bold;
 }
 
 form button:hover {
@@ -102,11 +106,13 @@ form button:hover {
   background-color: #f9f9f9;
   border-radius: 8px;
   margin-bottom: 10px;
-  transition: background-color 0.3s ease, border-left 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .transaction:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .transaction-info {
@@ -224,14 +230,16 @@ form button:hover {
 
 .modal {
   background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 80%;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
   max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modal h2 {
   margin-bottom: 20px;
+  color: #2c3e50;
 }
 
 .modal form {
@@ -244,6 +252,34 @@ form button:hover {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+}
+
+.modal-buttons button[type="submit"] {
+  background-color: #3498db;
+  color: white;
+}
+
+.modal-buttons button[type="submit"]:hover {
+  background-color: #2980b9;
+}
+
+.modal-buttons button[type="button"] {
+  background-color: #ecf0f1;
+  color: #34495e;
+}
+
+.modal-buttons button[type="button"]:hover {
+  background-color: #bdc3c7;
 }
 
 @keyframes highlightFade {
@@ -260,10 +296,11 @@ form button:hover {
   background-color: #e74c3c;
   color: white;
   border: none;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  margin-bottom: 10px;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
 }
 
 .delete-selected-button:hover {
@@ -288,10 +325,8 @@ form button:hover {
 }
 
 .select-multiple-label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: #34495e;
 }
 
 .select-multiple-checkbox {
@@ -305,9 +340,8 @@ form button:hover {
   padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9em;
-  margin-bottom: 0px;
-  margin-top: 0px;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
 }
 
 .delete-selected-button:hover {
@@ -356,9 +390,9 @@ form button:hover {
 
 .error-popup {
   background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   max-width: 400px;
   width: 90%;
 }
@@ -366,20 +400,25 @@ form button:hover {
 .error-popup h3 {
   margin-top: 0;
   color: #e74c3c;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
 }
 
 .error-popup p {
   margin-bottom: 20px;
   white-space: pre-line;
+  color: #34495e;
 }
 
 .error-popup button {
   background-color: #3498db;
   color: white;
   border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
 }
 
 .error-popup button:hover {
@@ -392,10 +431,11 @@ form button:hover {
 
 .search-bar input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   font-size: 16px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
 .search-bar input:focus {
@@ -421,13 +461,14 @@ form button:hover {
 }
 
 .filter-buttons button {
-  padding: 8px 12px;
+  padding: 10px 15px;
   margin-left: 10px;
   border: none;
   background-color: #f0f0f0;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-weight: bold;
 }
 
 .filter-buttons button.active {
@@ -446,4 +487,124 @@ form button:hover {
 .transaction-total {
   font-weight: bold;
   font-size: 1.1em;
+}
+
+// Add these new styles for better visual hierarchy
+.transactions-container h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.transaction-count {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+}
+
+.select-multiple-label {
+  font-size: 0.9rem;
+  color: #34495e;
+}
+
+.delete-selected-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.delete-selected-button:hover {
+  background-color: #c0392b;
+}
+
+// Improve modal styles
+.modal {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal h2 {
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+}
+
+.modal-buttons button[type="submit"] {
+  background-color: #3498db;
+  color: white;
+}
+
+.modal-buttons button[type="submit"]:hover {
+  background-color: #2980b9;
+}
+
+.modal-buttons button[type="button"] {
+  background-color: #ecf0f1;
+  color: #34495e;
+}
+
+.modal-buttons button[type="button"]:hover {
+  background-color: #bdc3c7;
+}
+
+// Improve error popup styles
+.error-popup {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+}
+
+.error-popup h3 {
+  margin-top: 0;
+  color: #e74c3c;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+.error-popup p {
+  margin-bottom: 20px;
+  white-space: pre-line;
+  color: #34495e;
+}
+
+.error-popup button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.error-popup button:hover {
+  background-color: #2980b9;
 }
