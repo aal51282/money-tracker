@@ -6,6 +6,7 @@ function App() {
   const [datetime, setDatetime] = useState("");
   const [description, setDescription] = useState("");
   const [transactions, setTransactions] = useState([]);
+  const [visibleTransactions, setVisibleTransactions] = useState(5);
 
   useEffect(() => {
     getTransactions().then(setTransactions);
@@ -38,6 +39,14 @@ function App() {
         getTransactions().then(setTransactions);
       });
     });
+  }
+
+  function loadMoreTransactions() {
+    setVisibleTransactions(prevVisible => prevVisible + 5);
+  }
+
+  function showLessTransactions() {
+    setVisibleTransactions(5);
   }
 
   const balance = transactions.reduce((acc, transaction) => acc + transaction.price, 0).toFixed(2);
@@ -76,7 +85,7 @@ function App() {
         <div className="transactions-container">
           <h2>Transactions</h2>
           <div className="transactions-list">
-            {transactions.map(transaction => (
+            {transactions.slice(0, visibleTransactions).map(transaction => (
               <div key={transaction.id} className="transaction">
                 <div className="transaction-details">
                   <div className="transaction-name">{transaction.name}</div>
@@ -88,6 +97,18 @@ function App() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="transaction-buttons">
+            {visibleTransactions < transactions.length && (
+              <button onClick={loadMoreTransactions} className="load-more-button">
+                Show More
+              </button>
+            )}
+            {visibleTransactions > 5 && (
+              <button onClick={showLessTransactions} className="show-less-button">
+                Show Less
+              </button>
+            )}
           </div>
         </div>
       </main>
