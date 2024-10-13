@@ -9,15 +9,25 @@ function App() {
   function addNewTransaction(e) {
     e.preventDefault();
     const url = process.env.REACT_APP_API_URL + '/transaction';
+    const price = name.split(' ')[0];
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description, datetime }),
+      body: JSON.stringify({
+        price,
+        name: name.substring(price.length + 1),
+        description,
+        datetime,
+      })
     }).then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
       return response.json();
+      setName('');
+      setDatetime('');
+      setDescription('');
     }).then(e => {
       // Handle successful response
       console.log('Success', e);
