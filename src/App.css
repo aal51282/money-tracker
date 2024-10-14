@@ -489,7 +489,7 @@ form button:hover {
   font-size: 1.1em;
 }
 
-// Add these new styles for better visual hierarchy
+ /* Add these new styles for better visual hierarchy */
 .transactions-container h2 {
   font-size: 1.8rem;
   margin-bottom: 20px;
@@ -522,7 +522,7 @@ form button:hover {
   background-color: #c0392b;
 }
 
-// Improve modal styles
+ /* Improve modal styles */
 .modal {
   background-color: white;
   padding: 30px;
@@ -571,7 +571,7 @@ form button:hover {
   background-color: #bdc3c7;
 }
 
-// Improve error popup styles
+/* Improve error popup styles */
 .error-popup {
   background-color: white;
   padding: 30px;
