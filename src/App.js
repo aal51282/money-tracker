@@ -19,6 +19,9 @@ function App() {
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [filter, setFilter] = useState('all'); // 'all', 'positive', or 'negative'
   const [filteredBalance, setFilteredBalance] = useState(0);
+  const [timeframe, setTimeframe] = useState('all'); // 'all', 'yearly', or 'monthly'
+  const [yearlyData, setYearlyData] = useState({});
+  const [monthlyData, setMonthlyData] = useState({});
 
   useEffect(() => {
     getTransactions().catch(err => setError('Failed to fetch transactions'));
@@ -26,7 +29,13 @@ function App() {
 
   useEffect(() => {
     filterTransactions();
-  }, [transactions, searchQuery, filter]);
+  }, [transactions, searchQuery, filter, timeframe]);
+
+  useEffect(() => {
+    if (transactions.length > 0) {
+      calculateTimeframeData();
+    }
+  }, [transactions]);
 
   async function getTransactions() {
     try {
@@ -223,6 +232,30 @@ function App() {
     }
   }
 
+  function calculateTimeframeData() {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const yearlyTransactions = transactions.filter(t => new Date(t.datetime).getFullYear() === currentYear);
+    const monthlyTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.datetime);
+      return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
+    });
+
+    setYearlyData({
+      transactions: yearlyTransactions,
+      balance: yearlyTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2),
+      count: yearlyTransactions.length
+    });
+
+    setMonthlyData({
+      transactions: monthlyTransactions,
+      balance: monthlyTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2),
+      count: monthlyTransactions.length
+    });
+  }
+
   function filterTransactions() {
     let filtered = transactions;
 
@@ -251,16 +284,35 @@ function App() {
     setFilteredBalance(newFilteredBalance);
   }
 
-  // Update the balance variable to use filteredBalance
-  const balance = filteredBalance.toFixed(2);
-  const isNegative = parseFloat(balance) < 0;
+  function getDisplayedTransactions() {
+    switch(timeframe) {
+      case 'yearly':
+        return filteredTransactions.filter(t => new Date(t.datetime).getFullYear() === new Date().getFullYear());
+      case 'monthly':
+        const now = new Date();
+        return filteredTransactions.filter(t => {
+          const date = new Date(t.datetime);
+          return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+        });
+      default:
+        return filteredTransactions;
+    }
+  }
+
+  function getDisplayedBalance() {
+    const displayedTransactions = getDisplayedTransactions();
+    return displayedTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2);
+  }
+
+  const displayedTransactions = getDisplayedTransactions();
+  const displayedBalance = getDisplayedBalance();
 
   return (
     <div className="app-container">
       <header>
         <h1>Money Tracker</h1>
-        <div className={`balance ${isNegative ? 'negative' : 'positive'}`}>
-          {isNegative ? '-' : '+'}${Math.abs(balance)}
+        <div className={`balance ${parseFloat(displayedBalance) < 0 ? 'negative' : 'positive'}`}>
+          {parseFloat(displayedBalance) < 0 ? '-' : '+'}${Math.abs(parseFloat(displayedBalance))}
         </div>
       </header>
       <main>
@@ -299,6 +351,34 @@ function App() {
         </div>
         <div className="transactions-container">
           <h2>Transactions</h2>
+          <div className="timeframe-tabs">
+            <button 
+              className={timeframe === 'all' ? 'active' : ''} 
+              onClick={() => setTimeframe('all')}
+            >
+              All Time
+            </button>
+            <button 
+              className={timeframe === 'yearly' ? 'active' : ''} 
+              onClick={() => setTimeframe('yearly')}
+            >
+              This Year
+            </button>
+            <button 
+              className={timeframe === 'monthly' ? 'active' : ''} 
+              onClick={() => setTimeframe('monthly')}
+            >
+              This Month
+            </button>
+          </div>
+          <div className="timeframe-info">
+            {timeframe !== 'all' && (
+              <p>
+                Showing {timeframe === 'yearly' ? yearlyData.count : monthlyData.count} transactions 
+                for {timeframe === 'yearly' ? 'this year' : 'this month'}
+              </p>
+            )}
+          </div>
           <div className="filters">
             <div className="search-bar">
               <input
@@ -331,7 +411,7 @@ function App() {
           </div>
           <div className="transactions-header">
             <p className="transaction-count">
-              Showing {Math.min(visibleTransactions, filteredTransactions.length)} of {filteredTransactions.length}
+              Showing {Math.min(visibleTransactions, displayedTransactions.length)} of {displayedTransactions.length}
             </p>
             <div className="select-multiple-container">
               <label className="select-multiple-label">
@@ -351,7 +431,7 @@ function App() {
             </div>
           </div>
           <div className="transactions-list">
-            {filteredTransactions.slice(0, visibleTransactions).map((transaction, index) => (
+            {displayedTransactions.slice(0, visibleTransactions).map((transaction, index) => (
               <div 
                 key={transaction._id} 
                 className={`transaction ${transaction._id === recentlyAddedId ? 'highlight' : ''}`}
@@ -380,12 +460,12 @@ function App() {
             ))}
           </div>
           <div className="transaction-buttons">
-            {filteredTransactions.length > visibleTransactions && (
+            {displayedTransactions.length > visibleTransactions && (
               <button onClick={() => setVisibleTransactions(prev => prev + 5)} className="load-more-button">
                 Load More
               </button>
             )}
-            {visibleTransactions > 5 && filteredTransactions.length > 5 && (
+            {visibleTransactions > 5 && displayedTransactions.length > 5 && (
               <button onClick={() => setVisibleTransactions(5)} className="show-less-button">
                 Show Less
               </button>
