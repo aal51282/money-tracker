@@ -89,14 +89,24 @@ function App() {
         throw new Error('Failed to add transaction');
       }
       return response.json();
-    }).then(json => {
+    }).then(newTransaction => {
       setName('');
       setPrice('');
       setDatetime('');
       setDescription('');
-      setTransactions(prevTransactions => [json, ...prevTransactions]);
+      setTransactions(prevTransactions => {
+        // Insert the new transaction in the correct position
+        const updatedTransactions = [...prevTransactions];
+        const insertIndex = updatedTransactions.findIndex(t => new Date(t.datetime) < new Date(newTransaction.datetime));
+        if (insertIndex === -1) {
+          updatedTransactions.push(newTransaction);
+        } else {
+          updatedTransactions.splice(insertIndex, 0, newTransaction);
+        }
+        return updatedTransactions;
+      });
       setTotalTransactions(prevTotal => prevTotal + 1);
-      setRecentlyAddedId(json._id);
+      setRecentlyAddedId(newTransaction._id);
     }).catch(err => {
       console.error('Error adding transaction:', err);
       setError('Failed to add transaction. Please try again.');
