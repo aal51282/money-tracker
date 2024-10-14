@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import "./App.css";
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [visibleTransactions, setVisibleTransactions] = useState(5);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [totalTransactions, setTotalTransactions] = useState(0);
+  const [, setTotalTransactions] = useState(0);
   const [recentlyAddedId, setRecentlyAddedId] = useState(null);
   const [selectedTransactions, setSelectedTransactions] = useState([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -18,10 +18,10 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [filter, setFilter] = useState('all'); // 'all', 'positive', or 'negative'
-  const [filteredBalance, setFilteredBalance] = useState(0);
+  const [, setFilteredBalance] = useState(0);
   const [timeframe, setTimeframe] = useState('all'); // 'all', 'yearly', or 'monthly'
-  const [yearlyData, setYearlyData] = useState({});
-  const [monthlyData, setMonthlyData] = useState({});
+  const [, setYearlyData] = useState({});
+  const [, setMonthlyData] = useState({});
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -29,15 +29,67 @@ function App() {
     getTransactions().catch(err => setError('Failed to fetch transactions'));
   }, []);
 
+  const filterTransactions = useCallback(() => {
+    let filtered = transactions;
+
+    // Apply transaction type filter
+    if (filter === 'positive') {
+      filtered = filtered.filter(t => t.price >= 0);
+    } else if (filter === 'negative') {
+      filtered = filtered.filter(t => t.price < 0);
+    }
+
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      const lowercaseQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(transaction => 
+        transaction.name.toLowerCase().includes(lowercaseQuery) ||
+        transaction.description.toLowerCase().includes(lowercaseQuery) ||
+        transaction.price.toString().includes(lowercaseQuery) ||
+        new Date(transaction.datetime).toLocaleString().toLowerCase().includes(lowercaseQuery)
+      );
+    }
+
+    setFilteredTransactions(filtered);
+    
+    // Calculate and set the filtered balance
+    const newFilteredBalance = filtered.reduce((sum, transaction) => sum + transaction.price, 0);
+    setFilteredBalance(newFilteredBalance);
+  }, [transactions, filter, searchQuery]);
+
   useEffect(() => {
     filterTransactions();
-  }, [transactions, searchQuery, filter, timeframe]);
+  }, [filterTransactions]);
+
+  const calculateTimeframeData = useCallback(() => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const yearlyTransactions = transactions.filter(t => new Date(t.datetime).getFullYear() === currentYear);
+    const monthlyTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.datetime);
+      return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
+    });
+
+    setYearlyData({
+      transactions: yearlyTransactions,
+      balance: yearlyTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2),
+      count: yearlyTransactions.length
+    });
+
+    setMonthlyData({
+      transactions: monthlyTransactions,
+      balance: monthlyTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2),
+      count: monthlyTransactions.length
+    });
+  }, [transactions]);
 
   useEffect(() => {
     if (transactions.length > 0) {
       calculateTimeframeData();
     }
-  }, [transactions]);
+  }, [calculateTimeframeData, transactions.length]);
 
   async function getTransactions() {
     try {
@@ -183,13 +235,7 @@ function App() {
     }
   }
 
-  function loadMoreTransactions() {
-    setVisibleTransactions(prevVisible => Math.min(prevVisible + 5, totalTransactions));
-  }
 
-  function showLessTransactions() {
-    setVisibleTransactions(5);
-  }
 
   function toggleSelectMode() {
     setIsSelectMode(!isSelectMode);
@@ -221,7 +267,6 @@ function App() {
       if (!response.ok) {
         throw new Error('Failed to delete transactions');
       }
-      const result = await response.json();
       setTransactions(prevTransactions => 
         prevTransactions.filter(t => !selectedTransactions.includes(t._id))
       );
@@ -232,58 +277,6 @@ function App() {
       console.error('Error deleting transactions:', error);
       setError('Failed to delete transactions. Please try again.');
     }
-  }
-
-  function calculateTimeframeData() {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-
-    const yearlyTransactions = transactions.filter(t => new Date(t.datetime).getFullYear() === currentYear);
-    const monthlyTransactions = transactions.filter(t => {
-      const transactionDate = new Date(t.datetime);
-      return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
-    });
-
-    setYearlyData({
-      transactions: yearlyTransactions,
-      balance: yearlyTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2),
-      count: yearlyTransactions.length
-    });
-
-    setMonthlyData({
-      transactions: monthlyTransactions,
-      balance: monthlyTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2),
-      count: monthlyTransactions.length
-    });
-  }
-
-  function filterTransactions() {
-    let filtered = transactions;
-
-    // Apply transaction type filter
-    if (filter === 'positive') {
-      filtered = filtered.filter(t => t.price >= 0);
-    } else if (filter === 'negative') {
-      filtered = filtered.filter(t => t.price < 0);
-    }
-
-    // Apply search query filter
-    if (searchQuery.trim()) {
-      const lowercaseQuery = searchQuery.toLowerCase();
-      filtered = filtered.filter(transaction => 
-        transaction.name.toLowerCase().includes(lowercaseQuery) ||
-        transaction.description.toLowerCase().includes(lowercaseQuery) ||
-        transaction.price.toString().includes(lowercaseQuery) ||
-        new Date(transaction.datetime).toLocaleString().toLowerCase().includes(lowercaseQuery)
-      );
-    }
-
-    setFilteredTransactions(filtered);
-    
-    // Calculate and set the filtered balance
-    const newFilteredBalance = filtered.reduce((sum, transaction) => sum + transaction.price, 0);
-    setFilteredBalance(newFilteredBalance);
   }
 
   function getDisplayedTransactions() {
