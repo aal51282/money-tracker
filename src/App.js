@@ -287,17 +287,17 @@ function App() {
   }
 
   function getDisplayedTransactions() {
-    switch(timeframe) {
-      case 'yearly':
-        return filteredTransactions.filter(t => new Date(t.datetime).getFullYear() === selectedYear);
-      case 'monthly':
-        return filteredTransactions.filter(t => {
-          const date = new Date(t.datetime);
-          return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
-        });
-      default:
-        return filteredTransactions;
+    let filtered = filteredTransactions;
+    
+    if (timeframe === 'yearly' || timeframe === 'monthly') {
+      filtered = filtered.filter(t => new Date(t.datetime).getFullYear() === selectedYear);
+      
+      if (timeframe === 'monthly') {
+        filtered = filtered.filter(t => new Date(t.datetime).getMonth() === selectedMonth);
+      }
     }
+    
+    return filtered;
   }
 
   function getDisplayedBalance() {
@@ -366,31 +366,30 @@ function App() {
               All Time
             </button>
             <select 
-              className={`timeframe-select ${timeframe === 'yearly' ? 'active' : ''}`}
-              value={timeframe === 'yearly' ? selectedYear : 'select'}
+              className={`timeframe-select ${timeframe === 'yearly' || timeframe === 'monthly' ? 'active' : ''}`}
+              value={selectedYear}
               onChange={(e) => {
-                const value = e.target.value;
-                if (value === 'select') return;
+                const value = parseInt(e.target.value);
+                setSelectedYear(value);
                 setTimeframe('yearly');
-                setSelectedYear(parseInt(value));
               }}
             >
-              <option value="select">Yearly</option>
+              <option value="">Select Year</option>
               {years.map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
             <select 
               className={`timeframe-select ${timeframe === 'monthly' ? 'active' : ''}`}
-              value={timeframe === 'monthly' ? selectedMonth : 'select'}
+              value={selectedMonth}
               onChange={(e) => {
-                const value = e.target.value;
-                if (value === 'select') return;
+                const value = parseInt(e.target.value);
+                setSelectedMonth(value);
                 setTimeframe('monthly');
-                setSelectedMonth(parseInt(value));
               }}
+              disabled={timeframe !== 'yearly' && timeframe !== 'monthly'}
             >
-              <option value="select">Monthly</option>
+              <option value="">Select Month</option>
               {months.map((month, index) => (
                 <option key={month} value={index}>{month}</option>
               ))}
@@ -400,7 +399,8 @@ function App() {
             {timeframe !== 'all' && (
               <p>
                 Showing {displayedTransactions.length} transactions 
-                for {timeframe === 'yearly' ? selectedYear : months[selectedMonth]}
+                for {timeframe === 'monthly' ? `${months[selectedMonth]} ` : ''}
+                {timeframe === 'yearly' || timeframe === 'monthly' ? selectedYear : ''}
               </p>
             )}
           </div>
