@@ -612,34 +612,69 @@ form button:hover {
 .timeframe-tabs {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+  gap: 15px;
 }
 
-.timeframe-tabs button {
+.timeframe-select,
+.timeframe-button {
   flex: 1;
-  padding: 10px;
-  border: none;
-  background-color: #f0f2f5;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f8f9fa;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-weight: bold;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #495057;
+  text-align: center;
+  opacity: 0.7;
 }
 
-.timeframe-tabs button.active {
-  background-color: #3498db;
-  color: white;
+.timeframe-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23495057" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
 }
 
-.timeframe-tabs button:hover {
-  background-color: #e4e6e9;
+.timeframe-select:hover,
+.timeframe-button:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  opacity: 0.9;
 }
 
-.timeframe-tabs button.active:hover {
-  background-color: #2980b9;
+.timeframe-select:focus,
+.timeframe-button:focus {
+  outline: none;
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+  opacity: 1;
+}
+
+.timeframe-select.active,
+.timeframe-button.active {
+  background-color: #e7f5ff;
+  border-color: #4dabf7;
+  color: #228be6;
+  opacity: 1;
+}
+
+.timeframe-select.active:hover,
+.timeframe-button.active:hover {
+  background-color: #d0ebff;
 }
 
 .timeframe-info {
   margin-bottom: 15px;
   font-size: 0.9rem;
-  color: #7f8c8d;
+  color: #868e96;
+  font-style: italic;
 }

@@ -22,6 +22,8 @@ function App() {
   const [timeframe, setTimeframe] = useState('all'); // 'all', 'yearly', or 'monthly'
   const [yearlyData, setYearlyData] = useState({});
   const [monthlyData, setMonthlyData] = useState({});
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
   useEffect(() => {
     getTransactions().catch(err => setError('Failed to fetch transactions'));
@@ -287,12 +289,11 @@ function App() {
   function getDisplayedTransactions() {
     switch(timeframe) {
       case 'yearly':
-        return filteredTransactions.filter(t => new Date(t.datetime).getFullYear() === new Date().getFullYear());
+        return filteredTransactions.filter(t => new Date(t.datetime).getFullYear() === selectedYear);
       case 'monthly':
-        const now = new Date();
         return filteredTransactions.filter(t => {
           const date = new Date(t.datetime);
-          return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+          return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
         });
       default:
         return filteredTransactions;
@@ -303,6 +304,12 @@ function App() {
     const displayedTransactions = getDisplayedTransactions();
     return displayedTransactions.reduce((sum, t) => sum + t.price, 0).toFixed(2);
   }
+
+  const years = Array.from(new Set(transactions.map(t => new Date(t.datetime).getFullYear()))).sort((a, b) => b - a);
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const displayedTransactions = getDisplayedTransactions();
   const displayedBalance = getDisplayedBalance();
@@ -353,29 +360,47 @@ function App() {
           <h2>Transactions</h2>
           <div className="timeframe-tabs">
             <button 
-              className={timeframe === 'all' ? 'active' : ''} 
+              className={`timeframe-button ${timeframe === 'all' ? 'active' : ''}`}
               onClick={() => setTimeframe('all')}
             >
               All Time
             </button>
-            <button 
-              className={timeframe === 'yearly' ? 'active' : ''} 
-              onClick={() => setTimeframe('yearly')}
+            <select 
+              className={`timeframe-select ${timeframe === 'yearly' ? 'active' : ''}`}
+              value={timeframe === 'yearly' ? selectedYear : 'select'}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'select') return;
+                setTimeframe('yearly');
+                setSelectedYear(parseInt(value));
+              }}
             >
-              This Year
-            </button>
-            <button 
-              className={timeframe === 'monthly' ? 'active' : ''} 
-              onClick={() => setTimeframe('monthly')}
+              <option value="select">Yearly</option>
+              {years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <select 
+              className={`timeframe-select ${timeframe === 'monthly' ? 'active' : ''}`}
+              value={timeframe === 'monthly' ? selectedMonth : 'select'}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'select') return;
+                setTimeframe('monthly');
+                setSelectedMonth(parseInt(value));
+              }}
             >
-              This Month
-            </button>
+              <option value="select">Monthly</option>
+              {months.map((month, index) => (
+                <option key={month} value={index}>{month}</option>
+              ))}
+            </select>
           </div>
           <div className="timeframe-info">
             {timeframe !== 'all' && (
               <p>
-                Showing {timeframe === 'yearly' ? yearlyData.count : monthlyData.count} transactions 
-                for {timeframe === 'yearly' ? 'this year' : 'this month'}
+                Showing {displayedTransactions.length} transactions 
+                for {timeframe === 'yearly' ? selectedYear : months[selectedMonth]}
               </p>
             )}
           </div>
