@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const Transaction = require('./models/Transaction.js');
+const User = require('./models/User.js'); // Import User model
 const app = express();
 const mongoose = require("mongoose");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // Middleware
@@ -25,10 +28,98 @@ mongoose.connect(process.env.MONGO_URL, {
   console.error('MongoDB connection error:', err);
 });
 
+// Utility function to generate JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+};
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) return res.status(401).json({ message: 'Access token missing' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid access token' });
+    req.user = user;
+    next();
+  });
+};
+
 // Test route
 app.get('/api/test', (req, res) => {
   res.json({ body: 'test ok' });
 });
+
+// Register a new user
+app.post('/api/register', async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(409).json({ message: 'Username already taken' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user
+    const user = await User.create({
+      username,
+      password: hashedPassword,
+    });
+
+    // Generate JWT
+    const token = generateToken(user);
+
+    res.status(201).json({ token, username: user.username });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Login a user
+app.post('/api/login', async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    // Find the user
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate JWT
+    const token = generateToken(user);
+
+    res.json({ token, username: user.username });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Middleware to protect transaction routes
+app.use('/api/transactions', authenticateToken);
+app.use('/api/transaction', authenticateToken);
 
 // Create a new transaction
 app.post('/api/transaction', async (req, res, next) => {
@@ -41,7 +132,8 @@ app.post('/api/transaction', async (req, res, next) => {
       name,
       description: description || '', // Make description optional
       datetime,
-      price
+      price,
+      user: req.user.id, // Associate transaction with user
     });
     res.status(201).json(transaction);
   } catch (error) {
@@ -49,10 +141,10 @@ app.post('/api/transaction', async (req, res, next) => {
   }
 });
 
-// Get all transactions from database
+// Get all transactions from database for the logged-in user
 app.get('/api/transactions', async (req, res, next) => {
   try {
-    const transactions = await Transaction.find().sort({ datetime: -1 });
+    const transactions = await Transaction.find({ user: req.user.id }).sort({ datetime: -1 });
     res.json(transactions);
   } catch (error) {
     next(error);
@@ -67,8 +159,8 @@ app.put('/api/transaction/:id', async (req, res, next) => {
     if (!name || !datetime || price === undefined) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    const updatedTransaction = await Transaction.findByIdAndUpdate(
-      id,
+    const updatedTransaction = await Transaction.findOneAndUpdate(
+      { _id: id, user: req.user.id },
       { name, description, datetime, price },
       { new: true, runValidators: true }
     );
@@ -85,7 +177,7 @@ app.put('/api/transaction/:id', async (req, res, next) => {
 app.delete('/api/transaction/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deletedTransaction = await Transaction.findByIdAndDelete(id);
+    const deletedTransaction = await Transaction.findOneAndDelete({ _id: id, user: req.user.id });
     if (!deletedTransaction) {
       return res.status(404).json({ message: 'Transaction not found' });
     }
@@ -102,7 +194,7 @@ app.post('/api/transactions/delete', async (req, res, next) => {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ message: 'Invalid or empty array of IDs' });
     }
-    const result = await Transaction.deleteMany({ _id: { $in: ids } });
+    const result = await Transaction.deleteMany({ _id: { $in: ids }, user: req.user.id });
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'No transactions found' });
     }

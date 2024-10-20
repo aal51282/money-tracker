@@ -6,6 +6,7 @@ const TransactionSchema = new Schema({
     price: { type: Number, required: true },
     description: { type: String, default: '' }, // Make description optional
     datetime: { type: Date, required: true },
+    user: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Associate with User
 });
 
 const TransactionModel = model('Transaction', TransactionSchema);
