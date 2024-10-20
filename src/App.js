@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import "./App.css";
+import { AuthContext, AuthProvider } from './services/AuthContext';
+import ProtectedRoute from './ProtectedRoute';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import axios from 'axios';
 
 function App() {
+  const { authData, logoutUser } = useContext(AuthContext);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [datetime, setDatetime] = useState("");
@@ -25,9 +32,13 @@ function App() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
-    getTransactions().catch(err => setError('Failed to fetch transactions'));
-  }, []);
+    if (authData) {
+      getTransactions().catch(err => setError('Failed to fetch transactions'));
+    }
+  }, [authData]);
 
   const filterTransactions = useCallback(() => {
     let filtered = transactions;
@@ -93,17 +104,16 @@ function App() {
 
   async function getTransactions() {
     try {
-      const url = process.env.REACT_APP_API_URL + '/transactions';
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
-      }
-      const data = await response.json();
-      setTransactions(data);
-      setTotalTransactions(data.length);
+      const response = await axios.get(`${API_URL}/transactions`, {
+        headers: {
+          Authorization: `Bearer ${authData.token}`,
+        },
+      });
+      setTransactions(response.data);
+      setTotalTransactions(response.data.length);
     } catch (error) {
       console.error('Error fetching transactions:', error);
-      throw error;
+      setError('Failed to fetch transactions');
     }
   }
 
@@ -126,7 +136,7 @@ function App() {
     return errors;
   }
 
-  function addNewTransaction(e) {
+  async function addNewTransaction(e) {
     e.preventDefault();
     const validationErrors = validateTransaction();
     if (validationErrors.length > 0) {
@@ -135,46 +145,40 @@ function App() {
       return;
     }
 
-    const url = process.env.REACT_APP_API_URL + '/transaction';
-    const priceAsNumber = parseFloat(price);
-
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      const priceAsNumber = parseFloat(price);
+      const response = await axios.post(`${API_URL}/transaction`, {
         price: priceAsNumber,
         name,
         description: description || '',
         datetime,
-      })
-    }).then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to add transaction');
-      }
-      return response.json();
-    }).then(newTransaction => {
+      }, {
+        headers: {
+          Authorization: `Bearer ${authData.token}`,
+        },
+      });
+
       setName('');
       setPrice('');
       setDatetime('');
       setDescription('');
       setTransactions(prevTransactions => {
-        // Insert the new transaction in the correct position
         const updatedTransactions = [...prevTransactions];
-        const insertIndex = updatedTransactions.findIndex(t => new Date(t.datetime) < new Date(newTransaction.datetime));
+        const insertIndex = updatedTransactions.findIndex(t => new Date(t.datetime) < new Date(response.data.datetime));
         if (insertIndex === -1) {
-          updatedTransactions.push(newTransaction);
+          updatedTransactions.push(response.data);
         } else {
-          updatedTransactions.splice(insertIndex, 0, newTransaction);
+          updatedTransactions.splice(insertIndex, 0, response.data);
         }
         return updatedTransactions;
       });
       setTotalTransactions(prevTotal => prevTotal + 1);
-      setRecentlyAddedId(newTransaction._id);
-    }).catch(err => {
+      setRecentlyAddedId(response.data._id);
+    } catch (err) {
       console.error('Error adding transaction:', err);
       setError('Failed to add transaction. Please try again.');
       setShowErrorPopup(true);
-    });
+    }
   }
 
   function closeErrorPopup() {
@@ -185,7 +189,7 @@ function App() {
   function editTransaction(transaction) {
     // Convert the datetime string to a format that works with datetime-local input
     const datetimeForInput = new Date(transaction.datetime).toISOString().slice(0, 16);
-    setEditingTransaction({...transaction, datetime: datetimeForInput});
+    setEditingTransaction({ ...transaction, datetime: datetimeForInput });
   }
 
   async function updateTransaction(e) {
@@ -195,20 +199,15 @@ function App() {
       setError('Please fill in all required fields');
       return;
     }
-    const url = process.env.REACT_APP_API_URL + '/transaction/' + editingTransaction._id;
     try {
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingTransaction)
+      const response = await axios.put(`${API_URL}/transaction/${editingTransaction._id}`, editingTransaction, {
+        headers: {
+          Authorization: `Bearer ${authData.token}`,
+        },
       });
-      if (!response.ok) {
-        throw new Error('Failed to update transaction');
-      }
-      const updatedTransaction = await response.json();
       setEditingTransaction(null);
       setTransactions(prevTransactions =>
-        prevTransactions.map(t => t._id === updatedTransaction._id ? updatedTransaction : t)
+        prevTransactions.map(t => t._id === response.data._id ? response.data : t)
       );
     } catch (error) {
       console.error('Error updating transaction:', error);
@@ -221,12 +220,12 @@ function App() {
       return;
     }
     setError(null);
-    const url = process.env.REACT_APP_API_URL + '/transaction/' + id;
     try {
-      const response = await fetch(url, { method: 'DELETE' });
-      if (!response.ok) {
-        throw new Error('Failed to delete transaction');
-      }
+      await axios.delete(`${API_URL}/transaction/${id}`, {
+        headers: {
+          Authorization: `Bearer ${authData.token}`,
+        },
+      });
       setTransactions(prevTransactions => prevTransactions.filter(t => t._id !== id));
       setTotalTransactions(prevTotal => prevTotal - 1);
     } catch (error) {
@@ -234,8 +233,6 @@ function App() {
       setError('Failed to delete transaction. Please try again.');
     }
   }
-
-
 
   function toggleSelectMode() {
     setIsSelectMode(!isSelectMode);
@@ -257,16 +254,12 @@ function App() {
       return;
     }
     setError(null);
-    const url = process.env.REACT_APP_API_URL + '/transactions/delete';
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedTransactions })
+      await axios.post(`${API_URL}/transactions/delete`, { ids: selectedTransactions }, {
+        headers: {
+          Authorization: `Bearer ${authData.token}`,
+        },
       });
-      if (!response.ok) {
-        throw new Error('Failed to delete transactions');
-      }
       setTransactions(prevTransactions => 
         prevTransactions.filter(t => !selectedTransactions.includes(t._id))
       );
@@ -308,236 +301,270 @@ function App() {
   const displayedBalance = getDisplayedBalance();
 
   return (
-    <div className="app-container">
-      <header>
-        <h1>Money Tracker</h1>
-        <div className={`balance ${parseFloat(displayedBalance) < 0 ? 'negative' : 'positive'}`}>
-          {parseFloat(displayedBalance) < 0 ? '-' : '+'}${Math.abs(parseFloat(displayedBalance))}
-        </div>
-      </header>
-      <main>
-        <div className="form-container">
-          <form onSubmit={addNewTransaction}>
-            <div className="basic">
-              <input 
-                type="text" 
-                value={name}
-                onChange={ev => setName(ev.target.value)}
-                placeholder={'Transaction Name'}
-              />
-              <input 
-                type="number" 
-                value={price}
-                onChange={ev => setPrice(ev.target.value)}
-                placeholder={'Price'}
-                step="0.01"
-              />
-              <input 
-                type="datetime-local" 
-                value={datetime}
-                onChange={ev => setDatetime(ev.target.value)}
-              />
+    <Router>
+      <div className="app-container">
+        <header>
+          <h1>Money Tracker</h1>
+          {authData && (
+            <div className={`balance ${parseFloat(displayedBalance) < 0 ? 'negative' : 'positive'}`}>
+              {parseFloat(displayedBalance) < 0 ? '-' : '+'}${Math.abs(parseFloat(displayedBalance))}
             </div>
-            <div className="description">
-              <input 
-                type="text"
-                value={description}
-                onChange={ev => setDescription(ev.target.value)}
-                placeholder={'Description (Optional)'}
-              />
-            </div>
-            <button type="submit">Add new transaction</button>
-          </form>
-        </div>
-        <div className="transactions-container">
-          <h2>Transactions</h2>
-          <div className="timeframe-tabs">
-            <button 
-              className={`timeframe-button ${timeframe === 'all' ? 'active' : ''}`}
-              onClick={() => setTimeframe('all')}
-            >
-              All Time
-            </button>
-            <select 
-              className={`timeframe-select ${timeframe === 'yearly' || timeframe === 'monthly' ? 'active' : ''}`}
-              value={selectedYear}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                setSelectedYear(value);
-                setTimeframe('yearly');
-              }}
-            >
-              <option value="">Select Year</option>
-              {years.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            <select 
-              className={`timeframe-select ${timeframe === 'monthly' ? 'active' : ''}`}
-              value={selectedMonth}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                setSelectedMonth(value);
-                setTimeframe('monthly');
-              }}
-              disabled={timeframe !== 'yearly' && timeframe !== 'monthly'}
-            >
-              <option value="">Select Month</option>
-              {months.map((month, index) => (
-                <option key={month} value={index}>{month}</option>
-              ))}
-            </select>
-          </div>
-          <div className="timeframe-info">
-            {timeframe !== 'all' && (
-              <p>
-                Showing {displayedTransactions.length} transactions 
-                for {timeframe === 'monthly' ? `${months[selectedMonth]} ` : ''}
-                {timeframe === 'yearly' || timeframe === 'monthly' ? selectedYear : ''}
-              </p>
+          )}
+          <nav>
+            {authData ? (
+              <>
+                <span>Welcome, {authData.username}</span>
+                <button onClick={logoutUser}>Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">Login</Link>
+                <Link to="/register">Register</Link>
+              </>
             )}
-          </div>
-          <div className="filters">
-            <div className="search-bar">
-              <input
-                type="text"
-                placeholder="Search transactions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="filter-buttons">
-              <button 
-                className={filter === 'all' ? 'active' : ''} 
-                onClick={() => setFilter('all')}
-              >
-                All
-              </button>
-              <button 
-                className={filter === 'positive' ? 'active' : ''} 
-                onClick={() => setFilter('positive')}
-              >
-                Income
-              </button>
-              <button 
-                className={filter === 'negative' ? 'active' : ''} 
-                onClick={() => setFilter('negative')}
-              >
-                Expenses
-              </button>
-            </div>
-          </div>
-          <div className="transactions-header">
-            <p className="transaction-count">
-              Showing {Math.min(visibleTransactions, displayedTransactions.length)} of {displayedTransactions.length}
-            </p>
-            <div className="select-multiple-container">
-              <label className="select-multiple-label">
-                <input
-                  type="checkbox"
-                  checked={isSelectMode}
-                  onChange={toggleSelectMode}
-                  className="select-multiple-checkbox"
-                />
-                Select Multiple
-              </label>
-              {isSelectMode && selectedTransactions.length > 0 && (
-                <button onClick={deleteSelectedTransactions} className="delete-selected-button">
-                  Delete Selected ({selectedTransactions.length})
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="transactions-list">
-            {displayedTransactions.slice(0, visibleTransactions).map((transaction, index) => (
-              <div 
-                key={transaction._id} 
-                className={`transaction ${transaction._id === recentlyAddedId ? 'highlight' : ''}`}
-              >
-                {isSelectMode && (
-                  <input
-                    type="checkbox"
-                    checked={selectedTransactions.includes(transaction._id)}
-                    onChange={() => toggleTransactionSelection(transaction._id)}
-                    className="transaction-checkbox"
-                  />
-                )}
-                <div className="transaction-details">
-                  <div className="transaction-name">{transaction.name}</div>
-                  <div className="transaction-description">{transaction.description}</div>
-                  <div className="transaction-date">{new Date(transaction.datetime).toLocaleString()}</div>
-                </div>
-                <div className={`transaction-amount ${transaction.price >= 0 ? 'positive' : 'negative'}`}>
-                  {transaction.price >= 0 ? '+' : '-'}${Math.abs(transaction.price)}
-                </div>
-                <div className="transaction-actions">
-                  <button onClick={() => editTransaction(transaction)} className="edit-button">Edit</button>
-                  <button onClick={() => deleteTransaction(transaction._id)} className="delete-button">Delete</button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="transaction-buttons">
-            {displayedTransactions.length > visibleTransactions && (
-              <button onClick={() => setVisibleTransactions(prev => prev + 5)} className="load-more-button">
-                Load More
-              </button>
-            )}
-            {visibleTransactions > 5 && displayedTransactions.length > 5 && (
-              <button onClick={() => setVisibleTransactions(5)} className="show-less-button">
-                Show Less
-              </button>
-            )}
-          </div>
-        </div>
-      </main>
-      {editingTransaction && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>Edit Transaction</h2>
-            <form onSubmit={updateTransaction}>
-              <input
-                type="text"
-                value={editingTransaction.name}
-                onChange={e => setEditingTransaction({...editingTransaction, name: e.target.value})}
-                placeholder="Transaction name"
-              />
-              <input
-                type="number"
-                value={editingTransaction.price}
-                onChange={e => setEditingTransaction({...editingTransaction, price: parseFloat(e.target.value)})}
-                placeholder="Amount"
-              />
-              <input
-                type="datetime-local"
-                value={editingTransaction.datetime}
-                onChange={e => setEditingTransaction({...editingTransaction, datetime: e.target.value})}
-              />
-              <input
-                type="text"
-                value={editingTransaction.description}
-                onChange={e => setEditingTransaction({...editingTransaction, description: e.target.value})}
-                placeholder="Description (Optional)"
-              />
-              <div className="modal-buttons">
-                <button type="submit">Save</button>
-                <button type="button" onClick={() => setEditingTransaction(null)}>Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {showErrorPopup && (
-        <div className="error-popup-overlay">
-          <div className="error-popup">
-            <h3>Error Adding Transaction</h3>
-            <p>{error}</p>
-            <button onClick={closeErrorPopup}>Close</button>
-          </div>
-        </div>
-      )}
-    </div>
+          </nav>
+        </header>
+        <main>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <div className="form-container">
+                    <form onSubmit={addNewTransaction}>
+                      <div className="basic">
+                        <input 
+                          type="text" 
+                          value={name}
+                          onChange={ev => setName(ev.target.value)}
+                          placeholder={'Transaction Name'}
+                        />
+                        <input 
+                          type="number" 
+                          value={price}
+                          onChange={ev => setPrice(ev.target.value)}
+                          placeholder={'Price'}
+                          step="0.01"
+                        />
+                        <input 
+                          type="datetime-local" 
+                          value={datetime}
+                          onChange={ev => setDatetime(ev.target.value)}
+                        />
+                      </div>
+                      <div className="description">
+                        <input 
+                          type="text"
+                          value={description}
+                          onChange={ev => setDescription(ev.target.value)}
+                          placeholder={'Description (Optional)'}
+                        />
+                      </div>
+                      <button type="submit">Add new transaction</button>
+                    </form>
+                  </div>
+                  <div className="transactions-container">
+                    <h2>Transactions</h2>
+                    <div className="timeframe-tabs">
+                      <button 
+                        className={`timeframe-button ${timeframe === 'all' ? 'active' : ''}`}
+                        onClick={() => setTimeframe('all')}
+                      >
+                        All Time
+                      </button>
+                      <select 
+                        className={`timeframe-select ${timeframe === 'yearly' || timeframe === 'monthly' ? 'active' : ''}`}
+                        value={selectedYear}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          setSelectedYear(value);
+                          setTimeframe('yearly');
+                        }}
+                      >
+                        <option value="">Select Year</option>
+                        {years.map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                      <select 
+                        className={`timeframe-select ${timeframe === 'monthly' ? 'active' : ''}`}
+                        value={selectedMonth}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          setSelectedMonth(value);
+                          setTimeframe('monthly');
+                        }}
+                        disabled={timeframe !== 'yearly' && timeframe !== 'monthly'}
+                      >
+                        <option value="">Select Month</option>
+                        {months.map((month, index) => (
+                          <option key={month} value={index}>{month}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="timeframe-info">
+                      {timeframe !== 'all' && (
+                        <p>
+                          Showing {displayedTransactions.length} transactions 
+                          for {timeframe === 'monthly' ? `${months[selectedMonth]} ` : ''}
+                          {timeframe === 'yearly' || timeframe === 'monthly' ? selectedYear : ''}
+                        </p>
+                      )}
+                    </div>
+                    <div className="filters">
+                      <div className="search-bar">
+                        <input
+                          type="text"
+                          placeholder="Search transactions..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                      <div className="filter-buttons">
+                        <button 
+                          className={filter === 'all' ? 'active' : ''} 
+                          onClick={() => setFilter('all')}
+                        >
+                          All
+                        </button>
+                        <button 
+                          className={filter === 'positive' ? 'active' : ''} 
+                          onClick={() => setFilter('positive')}
+                        >
+                          Income
+                        </button>
+                        <button 
+                          className={filter === 'negative' ? 'active' : ''} 
+                          onClick={() => setFilter('negative')}
+                        >
+                          Expenses
+                        </button>
+                      </div>
+                    </div>
+                    <div className="transactions-header">
+                      <p className="transaction-count">
+                        Showing {Math.min(visibleTransactions, displayedTransactions.length)} of {displayedTransactions.length}
+                      </p>
+                      <div className="select-multiple-container">
+                        <label className="select-multiple-label">
+                          <input
+                            type="checkbox"
+                            checked={isSelectMode}
+                            onChange={toggleSelectMode}
+                            className="select-multiple-checkbox"
+                          />
+                          Select Multiple
+                        </label>
+                        {isSelectMode && selectedTransactions.length > 0 && (
+                          <button onClick={deleteSelectedTransactions} className="delete-selected-button">
+                            Delete Selected ({selectedTransactions.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="transactions-list">
+                      {displayedTransactions.slice(0, visibleTransactions).map((transaction) => (
+                        <div 
+                          key={transaction._id} 
+                          className={`transaction ${transaction._id === recentlyAddedId ? 'highlight' : ''}`}
+                        >
+                          {isSelectMode && (
+                            <input
+                              type="checkbox"
+                              checked={selectedTransactions.includes(transaction._id)}
+                              onChange={() => toggleTransactionSelection(transaction._id)}
+                              className="transaction-checkbox"
+                            />
+                          )}
+                          <div className="transaction-details">
+                            <div className="transaction-name">{transaction.name}</div>
+                            <div className="transaction-description">{transaction.description}</div>
+                            <div className="transaction-date">{new Date(transaction.datetime).toLocaleString()}</div>
+                          </div>
+                          <div className={`transaction-amount ${transaction.price >= 0 ? 'positive' : 'negative'}`}>
+                            {transaction.price >= 0 ? '+' : '-'}${Math.abs(transaction.price)}
+                          </div>
+                          <div className="transaction-actions">
+                            <button onClick={() => editTransaction(transaction)} className="edit-button">Edit</button>
+                            <button onClick={() => deleteTransaction(transaction._id)} className="delete-button">Delete</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="transaction-buttons">
+                      {displayedTransactions.length > visibleTransactions && (
+                        <button onClick={() => setVisibleTransactions(prev => prev + 5)} className="load-more-button">
+                          Load More
+                        </button>
+                      )}
+                      {visibleTransactions > 5 && displayedTransactions.length > 5 && (
+                        <button onClick={() => setVisibleTransactions(5)} className="show-less-button">
+                          Show Less
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {editingTransaction && (
+                    <div className="modal-overlay">
+                      <div className="modal">
+                        <h2>Edit Transaction</h2>
+                        <form onSubmit={updateTransaction}>
+                          <input
+                            type="text"
+                            value={editingTransaction.name}
+                            onChange={e => setEditingTransaction({...editingTransaction, name: e.target.value})}
+                            placeholder="Transaction name"
+                          />
+                          <input
+                            type="number"
+                            value={editingTransaction.price}
+                            onChange={e => setEditingTransaction({...editingTransaction, price: parseFloat(e.target.value)})}
+                            placeholder="Amount"
+                          />
+                          <input
+                            type="datetime-local"
+                            value={editingTransaction.datetime}
+                            onChange={e => setEditingTransaction({...editingTransaction, datetime: e.target.value})}
+                          />
+                          <input
+                            type="text"
+                            value={editingTransaction.description}
+                            onChange={e => setEditingTransaction({...editingTransaction, description: e.target.value})}
+                            placeholder="Description (Optional)"
+                          />
+                          <div className="modal-buttons">
+                            <button type="submit">Save</button>
+                            <button type="button" onClick={() => setEditingTransaction(null)}>Cancel</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {showErrorPopup && (
+                    <div className="error-popup-overlay">
+                      <div className="error-popup">
+                        <h3>Error</h3>
+                        <p>{error}</p>
+                        <button onClick={closeErrorPopup}>Close</button>
+                      </div>
+                    </div>
+                  )}
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
-export default App;
+export default function WrappedApp() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
