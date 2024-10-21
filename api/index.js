@@ -11,8 +11,10 @@ require('dotenv').config();
 // Middleware
 app.use(cors({
   origin: ['https://angel-money-tracker.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  optionsSuccessStatus: 200,
+  optionsSuccessStatus: 200
 }));
 app.use(express.json());
 
@@ -213,6 +215,8 @@ app.post('/api/transactions/delete', async (req, res, next) => {
     next(error);
   }
 });
+
+app.options('*', cors()); // Enable preflight requests for all routes
 
 const PORT = process.env.PORT || 4040;
 app.listen(PORT, () => {
