@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const Transaction = require('./models/Transaction.js');
-const User = require('./models/User.js'); // Import User model
+const User = require('./models/User.js');
 const app = express();
 const mongoose = require("mongoose");
 const bcrypt = require('bcryptjs');
@@ -9,7 +9,10 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://angel-money-tracker.vercel.app', 'http://localhost:3000'],
+  optionsSuccessStatus: 200,
+}));
 app.use(express.json());
 
 // Error handling middleware
