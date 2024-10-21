@@ -17,6 +17,7 @@ const Register = () => {
             loginUser(data);
             navigate('/');
         } catch (err) {
+            console.error('Registration error:', err);
             setError(err.response?.data?.message || 'Registration failed');
         }
     };

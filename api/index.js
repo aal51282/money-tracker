@@ -11,6 +11,7 @@ require('dotenv').config();
 // Middleware
 app.use(cors({
   origin: ['https://angel-money-tracker.vercel.app', 'http://localhost:3000'],
+  credentials: true,
   optionsSuccessStatus: 200,
 }));
 app.use(express.json());
@@ -67,9 +68,12 @@ app.post('/api/register', async (req, res, next) => {
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
+    console.log('Attempting to register user:', username);
+
     // Check if user already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
+      console.log('User already exists:', username);
       return res.status(409).json({ message: 'Username already taken' });
     }
 
@@ -82,11 +86,14 @@ app.post('/api/register', async (req, res, next) => {
       password: hashedPassword,
     });
 
+    console.log('User registered successfully:', username);
+
     // Generate JWT
     const token = generateToken(user);
 
     res.status(201).json({ token, username: user.username });
   } catch (error) {
+    console.error('Registration error:', error);
     next(error);
   }
 });
