@@ -134,7 +134,7 @@ app.use('/api/transactions', authenticateToken);
 app.use('/api/transaction', authenticateToken);
 
 // Create a new transaction
-app.post('/api/transaction', async (req, res, next) => {
+app.post('/api/transaction', authenticateToken, async (req, res, next) => {
   try {
     const { name, description, datetime, price } = req.body;
     if (!name || !datetime || price === undefined) {
@@ -154,7 +154,7 @@ app.post('/api/transaction', async (req, res, next) => {
 });
 
 // Get all transactions from database for the logged-in user
-app.get('/api/transactions', async (req, res, next) => {
+app.get('/api/transactions', authenticateToken, async (req, res, next) => {
   try {
     const transactions = await Transaction.find({ user: req.user.id }).sort({ datetime: -1 });
     res.json(transactions);
@@ -164,7 +164,7 @@ app.get('/api/transactions', async (req, res, next) => {
 });
 
 // Update a transaction
-app.put('/api/transaction/:id', async (req, res, next) => {
+app.put('/api/transaction/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, description, datetime, price } = req.body;
@@ -186,7 +186,7 @@ app.put('/api/transaction/:id', async (req, res, next) => {
 });
 
 // Delete a transaction
-app.delete('/api/transaction/:id', async (req, res, next) => {
+app.delete('/api/transaction/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const deletedTransaction = await Transaction.findOneAndDelete({ _id: id, user: req.user.id });
@@ -200,7 +200,7 @@ app.delete('/api/transaction/:id', async (req, res, next) => {
 });
 
 // Delete multiple transactions
-app.post('/api/transactions/delete', async (req, res, next) => {
+app.post('/api/transactions/delete', authenticateToken, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
