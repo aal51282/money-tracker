@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { register } from '../services/authService';
 import { AuthContext } from '../services/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './Register.css';
 
 const Register = () => {
     const [username, setUsername] = useState('');

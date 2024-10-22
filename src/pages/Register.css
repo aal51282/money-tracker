@@ -1,0 +1,96 @@
+/* src/pages/Register.css */
+
+.auth-container {
+    max-width: 450px; /* Increased from 400px */
+    width: 90%; /* Added to ensure responsiveness */
+    margin: 80px auto;
+    padding: 40px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.auth-container h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #fff;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.auth-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-container input {
+    margin-bottom: 20px;
+    padding: 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+    transition: box-shadow 0.3s ease;
+    width: 100%; /* Ensure inputs take full width */
+}
+
+.auth-container input:focus {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.auth-container .error {
+    color: #ffcccc;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+    background-color: rgba(255, 0, 0, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.auth-container button {
+    padding: 15px;
+    font-size: 1.1rem; /* Slightly larger font */
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #fda085;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-weight: bold;
+    width: 100%; /* Make button full width */
+}
+
+.auth-container button:hover {
+    background-color: #fda085;
+    color: #ffffff;
+}
+
+.auth-container p {
+    text-align: center;
+    margin-top: 25px;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.auth-container a {
+    color: #ffffff;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.auth-container a:hover {
+    color: #ffeb3b;
+}
+
+/* Add some spacing between form elements */
+.auth-container form > * {
+    margin-bottom: 20px;
+}

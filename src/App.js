@@ -6,6 +6,7 @@ import ProtectedRoute from './ProtectedRoute';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import axios from 'axios';
+import { FaSignOutAlt, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 
 function App() {
   const { authData, logoutUser } = useContext(AuthContext);
@@ -31,6 +32,7 @@ function App() {
   const [, setMonthlyData] = useState({});
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [darkMode, setDarkMode] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -300,9 +302,13 @@ function App() {
   const displayedTransactions = getDisplayedTransactions();
   const displayedBalance = getDisplayedBalance();
 
+  function toggleDarkMode() {
+    setDarkMode(prevMode => !prevMode);
+  }
+
   return (
     <Router>
-      <div className="app-container">
+      <div className={`app-container ${darkMode ? 'dark' : ''}`}>
         <header>
           <h1>Money Tracker</h1>
           {authData && (
@@ -313,13 +319,13 @@ function App() {
           <nav>
             {authData ? (
               <>
-                <span>Welcome, {authData.username}</span>
-                <button onClick={logoutUser}>Logout</button>
+                <span style={{ alignSelf: 'center', color: '#3498db', fontWeight: 'bold' }}>Welcome, {authData.username}</span>
+                <button onClick={logoutUser}><FaSignOutAlt /> Logout</button>
               </>
             ) : (
               <>
-                <Link to="/login">Login</Link>
-                <Link to="/register">Register</Link>
+                <Link to="/login"><FaSignInAlt /> Login</Link>
+                <Link to="/register"><FaUserPlus /> Register</Link>
               </>
             )}
           </nav>
