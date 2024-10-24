@@ -1,82 +1,91 @@
-const express = require('express');
-const cors = require('cors');
-const Transaction = require('./models/Transaction.js');
-const User = require('./models/User.js');
+const express = require("express");
+const cors = require("cors");
+const Transaction = require("./models/Transaction.js");
+const User = require("./models/User.js");
 const app = express();
 const mongoose = require("mongoose");
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 // Middleware
-app.use(cors({
-  origin: ['https://angel-money-tracker.vercel.app', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
+app.use(
+  cors({
+    origin: ["https://angel-money-tracker.vercel.app", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 app.use(express.json());
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'An unexpected error occurred', error: err.message });
+  res
+    .status(500)
+    .json({ message: "An unexpected error occurred", error: err.message });
 });
 
 // Database connection
-mongoose.connect(process.env.MONGO_URL, { 
-  useNewUrlParser: true, 
-  useUnifiedTopology: true 
-}).then(() => {
-  console.log('Connected to MongoDB');
-}).catch(err => {
-  console.error('MongoDB connection error:', err);
-});
+mongoose
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
 
 // Utility function to generate JWT
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, username: user.username },
     process.env.JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: "1h" }
   );
 };
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
-  if (!token) return res.status(401).json({ message: 'Access token missing' });
+  if (!token) return res.status(401).json({ message: "Access token missing" });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid access token' });
+    if (err) return res.status(403).json({ message: "Invalid access token" });
     req.user = user;
     next();
   });
 };
 
 // Test route
-app.get('/api/test', (req, res) => {
-  res.json({ body: 'test ok' });
+app.get("/api/test", (req, res) => {
+  res.json({ body: "test ok" });
 });
 
 // Register a new user
-app.post('/api/register', async (req, res, next) => {
+app.post("/api/register", async (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
+      return res
+        .status(400)
+        .json({ message: "Username and password are required" });
     }
 
-    console.log('Attempting to register user:', username);
+    console.log("Attempting to register user:", username);
 
     // Check if user already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      console.log('User already exists:', username);
-      return res.status(409).json({ message: 'Username already taken' });
+      console.log("User already exists:", username);
+      return res.status(409).json({ message: "Username already taken" });
     }
 
     // Hash the password
@@ -88,36 +97,38 @@ app.post('/api/register', async (req, res, next) => {
       password: hashedPassword,
     });
 
-    console.log('User registered successfully:', username);
+    console.log("User registered successfully:", username);
 
     // Generate JWT
     const token = generateToken(user);
 
     res.status(201).json({ token, username: user.username });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     next(error);
   }
 });
 
 // Login a user
-app.post('/api/login', async (req, res, next) => {
+app.post("/api/login", async (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
+      return res
+        .status(400)
+        .json({ message: "Username and password are required" });
     }
 
     // Find the user
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Generate JWT
@@ -130,19 +141,19 @@ app.post('/api/login', async (req, res, next) => {
 });
 
 // Middleware to protect transaction routes
-app.use('/api/transactions', authenticateToken);
-app.use('/api/transaction', authenticateToken);
+app.use("/api/transactions", authenticateToken);
+app.use("/api/transaction", authenticateToken);
 
 // Create a new transaction
-app.post('/api/transaction', authenticateToken, async (req, res, next) => {
+app.post("/api/transaction", authenticateToken, async (req, res, next) => {
   try {
     const { name, description, datetime, price } = req.body;
     if (!name || !datetime || price === undefined) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: "Missing required fields" });
     }
     const transaction = await Transaction.create({
       name,
-      description: description || '', // Make description optional
+      description: description || "", // Make description optional
       datetime,
       price,
       user: req.user.id, // Associate transaction with user
@@ -154,9 +165,11 @@ app.post('/api/transaction', authenticateToken, async (req, res, next) => {
 });
 
 // Get all transactions from database for the logged-in user
-app.get('/api/transactions', authenticateToken, async (req, res, next) => {
+app.get("/api/transactions", authenticateToken, async (req, res, next) => {
   try {
-    const transactions = await Transaction.find({ user: req.user.id }).sort({ datetime: -1 });
+    const transactions = await Transaction.find({ user: req.user.id }).sort({
+      datetime: -1,
+    });
     res.json(transactions);
   } catch (error) {
     next(error);
@@ -164,12 +177,12 @@ app.get('/api/transactions', authenticateToken, async (req, res, next) => {
 });
 
 // Update a transaction
-app.put('/api/transaction/:id', authenticateToken, async (req, res, next) => {
+app.put("/api/transaction/:id", authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, description, datetime, price } = req.body;
     if (!name || !datetime || price === undefined) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: "Missing required fields" });
     }
     const updatedTransaction = await Transaction.findOneAndUpdate(
       { _id: id, user: req.user.id },
@@ -177,7 +190,7 @@ app.put('/api/transaction/:id', authenticateToken, async (req, res, next) => {
       { new: true, runValidators: true }
     );
     if (!updatedTransaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+      return res.status(404).json({ message: "Transaction not found" });
     }
     res.json(updatedTransaction);
   } catch (error) {
@@ -186,37 +199,55 @@ app.put('/api/transaction/:id', authenticateToken, async (req, res, next) => {
 });
 
 // Delete a transaction
-app.delete('/api/transaction/:id', authenticateToken, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const deletedTransaction = await Transaction.findOneAndDelete({ _id: id, user: req.user.id });
-    if (!deletedTransaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+app.delete(
+  "/api/transaction/:id",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const deletedTransaction = await Transaction.findOneAndDelete({
+        _id: id,
+        user: req.user.id,
+      });
+      if (!deletedTransaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      res.json({ message: "Transaction deleted successfully" });
+    } catch (error) {
+      next(error);
     }
-    res.json({ message: 'Transaction deleted successfully' });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // Delete multiple transactions
-app.post('/api/transactions/delete', authenticateToken, async (req, res, next) => {
-  try {
-    const { ids } = req.body;
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ message: 'Invalid or empty array of IDs' });
+app.post(
+  "/api/transactions/delete",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res
+          .status(400)
+          .json({ message: "Invalid or empty array of IDs" });
+      }
+      const result = await Transaction.deleteMany({
+        _id: { $in: ids },
+        user: req.user.id,
+      });
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: "No transactions found" });
+      }
+      res.json({
+        message: `${result.deletedCount} transaction(s) deleted successfully`,
+      });
+    } catch (error) {
+      next(error);
     }
-    const result = await Transaction.deleteMany({ _id: { $in: ids }, user: req.user.id });
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: 'No transactions found' });
-    }
-    res.json({ message: `${result.deletedCount} transaction(s) deleted successfully` });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-app.options('*', cors()); // Enable preflight requests for all routes
+app.options("*", cors()); // Enable preflight requests for all routes
 
 const PORT = process.env.PORT || 4040;
 app.listen(PORT, () => {
