@@ -50,7 +50,7 @@ Money Tracker is a full-stack web application built with the MERN (MongoDB, Expr
 3. Create a `.env` file in the api directory and add your MongoDB connection string:
 
    ```
-   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_URL=your_mongodb_connection_string
    ```
 
 4. Start the backend server:
