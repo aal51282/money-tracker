@@ -36,10 +36,40 @@ mongoose
   })
   .then(() => {
     console.log("Connected to MongoDB");
+
+    // Create default user if it doesn't exist
+    createDefaultUser();
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err);
   });
+
+// Create a default user for easy login
+const createDefaultUser = async () => {
+  try {
+    const defaultUsername = "demo";
+    const defaultPassword = "demo123";
+
+    // Check if default user already exists
+    const existingUser = await User.findOne({ username: defaultUsername });
+    if (!existingUser) {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+      // Create the user
+      await User.create({
+        username: defaultUsername,
+        password: hashedPassword,
+      });
+
+      console.log(`Default user '${defaultUsername}' created successfully`);
+    } else {
+      console.log(`Default user '${defaultUsername}' already exists`);
+    }
+  } catch (error) {
+    console.error("Error creating default user:", error);
+  }
+};
 
 // Utility function to generate JWT
 const generateToken = (user) => {
@@ -135,6 +165,24 @@ app.post("/api/login", async (req, res, next) => {
     const token = generateToken(user);
 
     res.json({ token, username: user.username });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Demo login route - logs in with the default user
+app.post("/api/demo-login", async (req, res, next) => {
+  try {
+    // Find the default user
+    const defaultUser = await User.findOne({ username: "demo" });
+    if (!defaultUser) {
+      return res.status(404).json({ message: "Default user not found" });
+    }
+
+    // Generate JWT
+    const token = generateToken(defaultUser);
+
+    res.json({ token, username: defaultUser.username });
   } catch (error) {
     next(error);
   }
