@@ -32,29 +32,36 @@ Money Tracker is a full-stack web application built with the MERN (MongoDB, Expr
 ### Installation
 
 1. Clone the repository:
+
    ```
    git clone https://github.com/aal51282/money-tracker
    cd money-tracker
    ```
 
 2. Install dependencies for both frontend and backend:
+
    ```
-   cd api then run: yarn install (installs the dependencies for the backend)
-   cd ../money-tracker then run: yarn install (installs the dependencies for the frontend)
+   a. cd api
+   b. run: yarn install (installs the dependencies for the backend)
+   c. cd ../money-tracker
+   d. run: yarn install (installs the dependencies for the frontend)
    ```
 
-3. Create a `.env` file in the server directory and add your MongoDB connection string:
+3. Create a `.env` file in the api directory and add your MongoDB connection string:
+
    ```
    MONGODB_URI=your_mongodb_connection_string
    ```
 
 4. Start the backend server:
+
    ```
    cd api
    nodemon index.js
    ```
 
 5. In a new terminal, start the frontend development server:
+
    ```
    cd ../money-tracker
    yarn start
