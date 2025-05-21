@@ -31,12 +31,27 @@ export const login = async (username, password) => {
 };
 
 export const demoLogin = async () => {
-  const response = await axios.post(
-    `${API_URL}/demo-login`,
-    {},
-    {
-      withCredentials: true,
+  console.log("Attempting demo login, API URL:", API_URL);
+  try {
+    const response = await axios.post(
+      `${API_URL}/demo-login`,
+      {},
+      {
+        withCredentials: true,
+      }
+    );
+    console.log("Demo login successful:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Demo login error:", error);
+    if (error.response) {
+      console.error("Error response data:", error.response.data);
+      console.error("Error response status:", error.response.status);
+    } else if (error.request) {
+      console.error("No response received:", error.request);
+    } else {
+      console.error("Error setting up request:", error.message);
     }
-  );
-  return response.data;
+    throw error;
+  }
 };
